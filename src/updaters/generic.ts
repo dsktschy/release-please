@@ -15,14 +15,15 @@
 import {DefaultUpdater, UpdateOptions} from './default';
 import {Version} from '../version';
 import {logger as defaultLogger, Logger} from '../util/logger';
+import {Manifest} from '../manifest';
 
 const VERSION_REGEX =
   /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(-(?<preRelease>[\w.]+))?(\+(?<build>[-\w.]+))?/;
 const SINGLE_VERSION_REGEX = /\b\d+\b/;
 const INLINE_UPDATE_REGEX =
-  /x-release-please-(?<scope>major|minor|patch|version-date|version|date)/;
+  /x-release-please-(?<scope>major|minor|patch|version-date|version|date|previous-root-project-version)/;
 const BLOCK_START_REGEX =
-  /x-release-please-start-(?<scope>major|minor|patch|version-date|version|date)/;
+  /x-release-please-start-(?<scope>major|minor|patch|version-date|version|date|previous-root-project-version)/;
 const BLOCK_END_REGEX = /x-release-please-end/;
 const DATE_FORMAT_REGEX = /%[Ymd]/g;
 export const DEFAULT_DATE_FORMAT = '%Y-%m-%d';
@@ -33,7 +34,8 @@ type BlockScope =
   | 'patch'
   | 'version'
   | 'date'
-  | 'version-date';
+  | 'version-date'
+  | 'previous-root-project-version';
 
 /**
  * Options for the Generic updater.
@@ -142,6 +144,17 @@ export class Generic extends DefaultUpdater {
         case 'patch':
           newLines.push(line.replace(SINGLE_VERSION_REGEX, `${version.patch}`));
           return;
+
+        // Replace only the pre-execution root project version
+        case 'previous-root-project-version':
+          newLines.push(
+            line.replace(
+              Manifest.previousRootProjectVersion?.toString() ?? VERSION_REGEX,
+              version.toString()
+            )
+          );
+          return;
+
         case 'version':
           newLines.push(line.replace(VERSION_REGEX, version.toString()));
           return;

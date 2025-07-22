@@ -326,6 +326,8 @@ export class Manifest {
   readonly logger: Logger;
   private pullRequestOverflowHandler: PullRequestOverflowHandler;
 
+  static previousRootProjectVersion?: Version = undefined;
+
   /**
    * Create a Manifest from explicit config in code. This assumes that the
    * repository has a single component at the root path.
@@ -435,6 +437,12 @@ export class Manifest {
       parseConfig(github, configFile, targetBranch, path, releaseAs),
       parseReleasedVersions(github, manifestFile, targetBranch),
     ]);
+
+    // Retain the pre-execution root project version for use in ./updaters/generic.ts
+    if (releasedVersions[ROOT_PROJECT_PATH]) {
+      Manifest.previousRootProjectVersion = releasedVersions[ROOT_PROJECT_PATH];
+    }
+
     return new Manifest(
       github,
       targetBranch,
@@ -501,6 +509,12 @@ export class Manifest {
     if (latestVersion) {
       releasedVersions[path] = latestVersion;
     }
+
+    // Retain the pre-execution root project version for use in ./updaters/generic.ts
+    if (releasedVersions[ROOT_PROJECT_PATH]) {
+      Manifest.previousRootProjectVersion = releasedVersions[ROOT_PROJECT_PATH];
+    }
+
     return new Manifest(
       github,
       targetBranch,
